@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { SudokuGrid } from './components/SudokuGrid';
 import { GameControls } from './components/GameControls';
 import { NumberPad } from './components/NumberPad';
-import { ThemeToggle } from './components/ThemeToggle';
 import { SuccessModal } from './components/SuccessModal';
 import { DailyChallenge } from './components/DailyChallenge';
 import { Leaderboard } from './components/Leaderboard';
@@ -72,8 +71,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 transition-colors duration-300">
-      <ThemeToggle />
-
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <header className="text-center mb-6 md:mb-8">
           <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:to-blue-600 mb-2 tracking-tight">
