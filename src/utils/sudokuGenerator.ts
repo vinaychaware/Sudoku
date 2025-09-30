@@ -65,7 +65,9 @@ function getCellsToRemove(difficulty: Difficulty): number {
     case 'medium':
       return 45;
     case 'hard':
-      return 55;
+      return 52;
+    case 'expert':
+      return 60;
     default:
       return 40;
   }

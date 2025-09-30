@@ -1,82 +1,70 @@
 import React from 'react';
-import type { CellValue } from '../types/sudoku';
+import type { CellValue, ValidationStatus } from '../types/sudoku';
 
 interface SudokuCellProps {
   value: CellValue;
   isOriginal: boolean;
+  isSelected: boolean;
   isHighlighted: boolean;
-  isError: boolean;
+  validation: ValidationStatus;
+  isHint: boolean;
   row: number;
   col: number;
-  onValueChange: (row: number, col: number, value: CellValue) => void;
-  onFocus: (row: number, col: number) => void;
+  onClick: (row: number, col: number) => void;
 }
 
 export function SudokuCell({
   value,
   isOriginal,
+  isSelected,
   isHighlighted,
-  isError,
+  validation,
+  isHint,
   row,
   col,
-  onValueChange,
-  onFocus
+  onClick,
 }: SudokuCellProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-
-    if (val === '') {
-      onValueChange(row, col, null);
-    } else {
-      const num = parseInt(val, 10);
-      if (num >= 1 && num <= 9) {
-        onValueChange(row, col, num);
-      }
-    }
+  const getBackgroundColor = () => {
+    if (isSelected) return 'bg-blue-200 dark:bg-blue-900';
+    if (isHighlighted) return 'bg-blue-50 dark:bg-blue-950';
+    if (validation === 'correct') return 'bg-green-100 dark:bg-green-950';
+    if (validation === 'incorrect') return 'bg-red-100 dark:bg-red-950';
+    return 'bg-gray-50 dark:bg-gray-800';
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' || e.key === 'Delete') {
-      onValueChange(row, col, null);
-      e.preventDefault();
-    }
+  const getTextColor = () => {
+    if (isOriginal) return 'text-gray-900 dark:text-gray-100 font-bold';
+    if (isHint) return 'text-green-600 dark:text-green-400 font-semibold';
+    if (validation === 'incorrect') return 'text-red-600 dark:text-red-400';
+    return 'text-blue-600 dark:text-blue-400';
   };
 
-  const getCellClasses = () => {
-    const baseClasses = 'w-full h-full text-center font-bold text-lg outline-none transition-all duration-200';
-    const borderClasses = 'border border-gray-300 dark:border-gray-600';
-    const rightBorder = (col + 1) % 3 === 0 && col !== 8 ? 'border-r-[3px] border-r-gray-800 dark:border-r-gray-300' : '';
-    const bottomBorder = (row + 1) % 3 === 0 && row !== 8 ? 'border-b-[3px] border-b-gray-800 dark:border-b-gray-300' : '';
-
-    let bgClass = 'bg-white dark:bg-gray-800';
-    let textClass = isOriginal ? 'text-gray-900 dark:text-gray-100' : 'text-blue-600 dark:text-blue-400';
-
-    if (isHighlighted) {
-      bgClass = 'bg-blue-100 dark:bg-blue-900/40';
-    }
-
-    if (isError) {
-      bgClass = 'bg-red-100 dark:bg-red-900/40';
-      textClass = 'text-red-600 dark:text-red-400';
-    }
-
-    const cursorClass = isOriginal ? 'cursor-not-allowed' : 'cursor-text hover:bg-gray-100 dark:hover:bg-gray-700';
-    const focusClass = 'focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:z-10';
-
-    return `${baseClasses} ${borderClasses} ${rightBorder} ${bottomBorder} ${bgClass} ${textClass} ${cursorClass} ${focusClass}`;
+  const getBorderClasses = () => {
+    const classes = ['border'];
+    if (col % 3 === 2 && col !== 8) classes.push('border-r-2 border-r-gray-900 dark:border-r-gray-300');
+    if (row % 3 === 2 && row !== 8) classes.push('border-b-2 border-b-gray-900 dark:border-b-gray-300');
+    return classes.join(' ');
   };
 
   return (
-    <input
-      type="text"
-      inputMode="numeric"
-      maxLength={1}
-      value={value ?? ''}
-      onChange={handleChange}
-      onKeyDown={handleKeyDown}
-      onFocus={() => onFocus(row, col)}
+    <button
+      className={`
+        ${getBackgroundColor()}
+        ${getTextColor()}
+        ${getBorderClasses()}
+        w-full aspect-square
+        flex items-center justify-center
+        text-lg md:text-2xl
+        border-gray-300 dark:border-gray-600
+        transition-all duration-150
+        hover:bg-blue-100 dark:hover:bg-blue-900
+        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:z-10
+        ${!isOriginal ? 'cursor-pointer' : 'cursor-default'}
+      `}
+      onClick={() => onClick(row, col)}
       disabled={isOriginal}
-      className={getCellClasses()}
-    />
+    >
+      {value || ''}
+    </button>
   );
 }

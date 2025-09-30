@@ -1,229 +1,187 @@
 import React, { useState, useEffect } from 'react';
 import { SudokuGrid } from './components/SudokuGrid';
-import { Sidebar } from './components/Sidebar';
+import { GameControls } from './components/GameControls';
+import { NumberPad } from './components/NumberPad';
 import { ThemeToggle } from './components/ThemeToggle';
-import { generateSudoku } from './utils/sudokuGenerator';
-import { solveSudoku, checkSolution, getHint } from './utils/sudokuSolver';
-import type { Cell, CellValue, Difficulty, SudokuGrid as GridType } from './types/sudoku';
+import { SuccessModal } from './components/SuccessModal';
+import { DailyChallenge } from './components/DailyChallenge';
+import { Leaderboard } from './components/Leaderboard';
+import { useGameState } from './hooks/useGameState';
+import { Menu, X } from 'lucide-react';
 
 function App() {
-  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  const [originalGrid, setOriginalGrid] = useState<GridType>([]);
-  const [currentGrid, setCurrentGrid] = useState<Cell[][]>([]);
-  const [solution, setSolution] = useState<GridType>([]);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const {
+    gameState,
+    selectedCell,
+    setSelectedCell,
+    newGame,
+    setValue,
+    undo,
+    redo,
+    getHint,
+    solve,
+    restart,
+    validateCell,
+  } = useGameState();
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDailyChallenge, setShowDailyChallenge] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [hintCells] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    initializeNewPuzzle(difficulty);
-  }, []);
-
-  const initializeNewPuzzle = (diff: Difficulty) => {
-    const puzzle = generateSudoku(diff);
-    const solved = solveSudoku(puzzle);
-
-    if (!solved) {
-      return;
+    if (gameState.isComplete && !showSuccessModal) {
+      setShowSuccessModal(true);
     }
+  }, [gameState.isComplete, showSuccessModal]);
 
-    setOriginalGrid(puzzle);
-    setSolution(solved);
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!selectedCell) return;
 
-    const cellGrid: Cell[][] = puzzle.map((row, rowIndex) =>
-      row.map((value, colIndex) => ({
-        value,
-        isOriginal: value !== null,
-        isHighlighted: false,
-        isError: false
-      }))
-    );
+      if (e.key >= '1' && e.key <= '9') {
+        setValue(selectedCell.row, selectedCell.col, parseInt(e.key));
+      } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        setValue(selectedCell.row, selectedCell.col, null);
+      } else if (e.key === 'ArrowUp' && selectedCell.row > 0) {
+        setSelectedCell({ row: selectedCell.row - 1, col: selectedCell.col });
+      } else if (e.key === 'ArrowDown' && selectedCell.row < 8) {
+        setSelectedCell({ row: selectedCell.row + 1, col: selectedCell.col });
+      } else if (e.key === 'ArrowLeft' && selectedCell.col > 0) {
+        setSelectedCell({ row: selectedCell.row, col: selectedCell.col - 1 });
+      } else if (e.key === 'ArrowRight' && selectedCell.col < 8) {
+        setSelectedCell({ row: selectedCell.row, col: selectedCell.col + 1 });
+      }
+    };
 
-    setCurrentGrid(cellGrid);
-    setMessage(null);
-  };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [selectedCell, setValue, setSelectedCell]);
 
-  const handleNewPuzzle = () => {
-    initializeNewPuzzle(difficulty);
-    showMessage('New puzzle generated!', 'info');
-  };
-
-  const handleDifficultyChange = (newDifficulty: Difficulty) => {
-    setDifficulty(newDifficulty);
-    initializeNewPuzzle(newDifficulty);
-    showMessage(`Difficulty changed to ${newDifficulty}!`, 'info');
-  };
-
-  const handleCellChange = (row: number, col: number, value: CellValue) => {
-    if (currentGrid[row][col].isOriginal) {
-      return;
-    }
-
-    const newGrid = currentGrid.map((r, rIdx) =>
-      r.map((cell, cIdx) =>
-        rIdx === row && cIdx === col
-          ? { ...cell, value, isError: false }
-          : cell
-      )
-    );
-
-    setCurrentGrid(newGrid);
-    setMessage(null);
-  };
-
-  const handleCellFocus = (row: number, col: number) => {
-    const value = currentGrid[row][col].value;
-
-    if (value === null) {
-      const newGrid = currentGrid.map(r =>
-        r.map(cell => ({ ...cell, isHighlighted: false }))
-      );
-      setCurrentGrid(newGrid);
-      return;
-    }
-
-    const newGrid = currentGrid.map((r, rIdx) =>
-      r.map((cell, cIdx) => ({
-        ...cell,
-        isHighlighted: cell.value === value && cell.value !== null
-      }))
-    );
-
-    setCurrentGrid(newGrid);
-  };
-
-  const handleSolvePuzzle = () => {
-    if (!solution) {
-      showMessage('Unable to solve puzzle', 'error');
-      return;
-    }
-
-    const newGrid = currentGrid.map((row, rowIndex) =>
-      row.map((cell, colIndex) => ({
-        ...cell,
-        value: solution[rowIndex][colIndex],
-        isHighlighted: false,
-        isError: false
-      }))
-    );
-
-    setCurrentGrid(newGrid);
-    showMessage('Puzzle solved!', 'success');
-  };
-
-  const handleCheckSolution = () => {
-    const gridValues: GridType = currentGrid.map(row => row.map(cell => cell.value));
-    const isComplete = gridValues.every(row => row.every(val => val !== null));
-
-    if (!isComplete) {
-      showMessage('Puzzle is not complete yet!', 'info');
-      return;
-    }
-
-    if (checkSolution(gridValues)) {
-      showMessage('Congratulations! Solution is correct!', 'success');
-    } else {
-      const newGrid = currentGrid.map((row, rowIndex) =>
-        row.map((cell, colIndex) => {
-          if (!cell.isOriginal && cell.value !== solution[rowIndex][colIndex]) {
-            return { ...cell, isError: true };
-          }
-          return { ...cell, isError: false };
-        })
-      );
-      setCurrentGrid(newGrid);
-      showMessage('Some cells are incorrect. Please try again!', 'error');
+  const handleNumberPadClick = (num: number | null) => {
+    if (selectedCell) {
+      setValue(selectedCell.row, selectedCell.col, num);
     }
   };
 
-  const handleHint = () => {
-    const gridValues: GridType = currentGrid.map(row => row.map(cell => cell.value));
-    const hint = getHint(gridValues, solution);
-
-    if (!hint) {
-      showMessage('No hints available - puzzle is complete!', 'info');
-      return;
-    }
-
-    const newGrid = currentGrid.map((row, rowIndex) =>
-      row.map((cell, colIndex) => {
-        if (rowIndex === hint.row && colIndex === hint.col) {
-          return {
-            ...cell,
-            value: hint.value,
-            isHighlighted: true,
-            isError: false
-          };
-        }
-        return { ...cell, isHighlighted: false };
-      })
-    );
-
-    setCurrentGrid(newGrid);
-    showMessage('Hint added!', 'success');
-  };
-
-  const showMessage = (text: string, type: 'success' | 'error' | 'info') => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage(null), 3000);
-  };
-
-  const getMessageClasses = () => {
-    if (!message) return '';
-
-    const baseClasses = 'px-5 py-3 rounded-xl font-semibold shadow-lg transition-all transform animate-in fade-in slide-in-from-top-2 duration-300';
-
-    switch (message.type) {
-      case 'success':
-        return `${baseClasses} bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-2 border-green-300 dark:border-green-700`;
-      case 'error':
-        return `${baseClasses} bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-2 border-red-300 dark:border-red-700`;
-      case 'info':
-        return `${baseClasses} bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-2 border-blue-300 dark:border-blue-700`;
-      default:
-        return baseClasses;
-    }
+  const handleNewGame = () => {
+    setShowSuccessModal(false);
+    newGame(gameState.difficulty, gameState.mode);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 py-8 px-4 transition-colors duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 transition-colors duration-300">
       <ThemeToggle />
 
-      <div className="max-w-7xl mx-auto">
-        <header className="text-center mb-10">
-          <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:to-blue-600 mb-3 tracking-tight">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <header className="text-center mb-6 md:mb-8">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:to-blue-600 mb-2 tracking-tight">
             Sudoku Solver & Game
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">Challenge your mind with classic Sudoku puzzles</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base font-medium">
+            Challenge your mind with classic Sudoku puzzles
+          </p>
         </header>
 
-        {message && (
-          <div className="max-w-2xl mx-auto mb-6">
-            <div className={getMessageClasses()}>
-              {message.text}
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-start justify-center">
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="lg:hidden fixed top-4 right-4 z-40 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border-2 border-gray-200 dark:border-gray-700"
+          >
+            {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
+          </button>
+
+          <aside
+            className={`
+              ${showMobileMenu ? 'translate-x-0' : '-translate-x-full'}
+              lg:translate-x-0
+              fixed lg:relative
+              top-0 left-0
+              h-full lg:h-auto
+              w-80 lg:w-auto
+              z-30
+              transition-transform duration-300
+              lg:block
+              overflow-y-auto
+              lg:overflow-visible
+              pt-16 lg:pt-0
+              px-4 lg:px-0
+              bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 lg:bg-none
+            `}
+          >
+            <GameControls
+              difficulty={gameState.difficulty}
+              mode={gameState.mode}
+              hintsRemaining={gameState.hintsRemaining}
+              timer={gameState.timer}
+              score={gameState.score}
+              canUndo={gameState.historyIndex > 0}
+              canRedo={gameState.historyIndex < gameState.history.length - 1}
+              onNewGame={newGame}
+              onUndo={undo}
+              onRedo={redo}
+              onHint={getHint}
+              onSolve={solve}
+              onRestart={restart}
+              onShowLeaderboard={() => setShowLeaderboard(true)}
+              onShowDailyChallenge={() => setShowDailyChallenge(true)}
+            />
+          </aside>
+
+          <main className="flex-1 max-w-2xl mx-auto w-full">
+            <SudokuGrid
+              grid={gameState.grid}
+              originalGrid={gameState.originalGrid}
+              selectedCell={selectedCell}
+              validateCell={validateCell}
+              onCellClick={setSelectedCell}
+              hintCells={hintCells}
+            />
+
+            <div className="mt-4">
+              <NumberPad
+                onNumberClick={handleNumberPadClick}
+                disabled={!selectedCell || gameState.originalGrid[selectedCell.row][selectedCell.col] !== null}
+              />
             </div>
-          </div>
-        )}
 
-        <div className="flex flex-col lg:flex-row items-start justify-center gap-6 lg:gap-8">
-          <SudokuGrid
-            grid={currentGrid}
-            onCellChange={handleCellChange}
-            onCellFocus={handleCellFocus}
-          />
-
-          <Sidebar
-            difficulty={difficulty}
-            onDifficultyChange={handleDifficultyChange}
-            onNewPuzzle={handleNewPuzzle}
-            onSolvePuzzle={handleSolvePuzzle}
-            onCheckSolution={handleCheckSolution}
-            onHint={handleHint}
-          />
+            <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+              <p>Click a cell and use the number pad or keyboard (1-9) to play</p>
+              <p className="mt-1">Use arrow keys to navigate</p>
+            </div>
+          </main>
         </div>
-
-        <footer className="text-center mt-10 text-gray-500 dark:text-gray-400 text-sm">
-          <p className="font-medium">Select a cell and enter a number (1-9) to play</p>
-        </footer>
       </div>
+
+      {showMobileMenu && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-20"
+          onClick={() => setShowMobileMenu(false)}
+        />
+      )}
+
+      {showSuccessModal && (
+        <SuccessModal
+          time={gameState.timer}
+          difficulty={gameState.difficulty}
+          onClose={() => setShowSuccessModal(false)}
+          onNewGame={handleNewGame}
+        />
+      )}
+
+      {showDailyChallenge && (
+        <DailyChallenge
+          onClose={() => setShowDailyChallenge(false)}
+          onStartChallenge={(difficulty) => {
+            newGame(difficulty, 'daily');
+          }}
+        />
+      )}
+
+      {showLeaderboard && (
+        <Leaderboard onClose={() => setShowLeaderboard(false)} />
+      )}
     </div>
   );
 }
