@@ -84,9 +84,9 @@ function App() {
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-start justify-center">
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="lg:hidden fixed top-4 right-4 z-40 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border-2 border-gray-200 dark:border-gray-700"
+            className="lg:hidden fixed top-4 right-4 z-40 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border-2 border-gray-200 dark:border-gray-700 hover:scale-105 active:scale-95 transition-transform"
           >
-            {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
+            {showMobileMenu ? <X size={24} className="text-gray-700 dark:text-gray-300" /> : <Menu size={24} className="text-gray-700 dark:text-gray-300" />}
           </button>
 
           <aside
@@ -144,8 +144,10 @@ function App() {
             </div>
 
             <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-              <p>Click a cell and use the number pad or keyboard (1-9) to play</p>
-              <p className="mt-1">Use arrow keys to navigate</p>
+              <p className="font-medium">
+                {!selectedCell ? '👆 Click any cell to start playing' : 'Use the number pad or keyboard (1-9) to enter numbers'}
+              </p>
+              <p className="mt-1">Press Backspace/Delete to clear • Arrow keys to navigate</p>
             </div>
           </main>
         </div>

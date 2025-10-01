@@ -44,9 +44,9 @@ export function GameControls({
   };
 
   const buttonClass = 'flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md active:scale-95';
-  const primaryButton = `${buttonClass} bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white`;
-  const secondaryButton = `${buttonClass} bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400`;
-  const iconButton = `${buttonClass} bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 disabled:opacity-40 disabled:cursor-not-allowed`;
+  const primaryButton = `${buttonClass} bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white hover:scale-105`;
+  const secondaryButton = `${buttonClass} bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:scale-105`;
+  const iconButton = `${buttonClass} bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:border-gray-200 dark:disabled:hover:border-gray-700`;
 
   return (
     <div className="space-y-4">
@@ -114,7 +114,11 @@ export function GameControls({
         </div>
 
         <div className="space-y-2">
-          <button onClick={onHint} disabled={hintsRemaining === 0} className={secondaryButton}>
+          <button
+            onClick={onHint}
+            disabled={hintsRemaining === 0}
+            className={`${secondaryButton} ${hintsRemaining === 0 ? 'opacity-40 cursor-not-allowed hover:scale-100 hover:border-gray-200 dark:hover:border-gray-700' : ''}`}
+          >
             <Lightbulb size={18} />
             Hint ({hintsRemaining})
           </button>

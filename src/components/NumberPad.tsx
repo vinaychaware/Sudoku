@@ -14,37 +14,35 @@ export function NumberPad({ onNumberClick, disabled = false }: NumberPadProps) {
         {numbers.map((num) => (
           <button
             key={num}
-            onClick={() => onNumberClick(num)}
+            onClick={() => !disabled && onNumberClick(num)}
             disabled={disabled}
-            className="
-              bg-gradient-to-br from-blue-500 to-blue-600
-              hover:from-blue-600 hover:to-blue-700
-              text-white font-bold text-lg
+            className={`
+              font-bold text-lg
               py-3 px-4 rounded-lg
-              shadow-md hover:shadow-lg
-              transform hover:scale-105 active:scale-95
+              shadow-md
               transition-all duration-150
-              disabled:opacity-50 disabled:cursor-not-allowed
-              disabled:hover:scale-100
-            "
+              ${disabled
+                ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-500 cursor-not-allowed opacity-50'
+                : 'bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white hover:shadow-lg transform hover:scale-105 active:scale-95'
+              }
+            `}
           >
             {num}
           </button>
         ))}
         <button
-          onClick={() => onNumberClick(null)}
+          onClick={() => !disabled && onNumberClick(null)}
           disabled={disabled}
-          className="
-            bg-gradient-to-br from-red-500 to-red-600
-            hover:from-red-600 hover:to-red-700
-            text-white font-bold text-sm
+          className={`
+            font-bold text-sm
             py-3 px-4 rounded-lg
-            shadow-md hover:shadow-lg
-            transform hover:scale-105 active:scale-95
+            shadow-md
             transition-all duration-150
-            disabled:opacity-50 disabled:cursor-not-allowed
-            disabled:hover:scale-100
-          "
+            ${disabled
+              ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-500 cursor-not-allowed opacity-50'
+              : 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white hover:shadow-lg transform hover:scale-105 active:scale-95'
+            }
+          `}
         >
           Clear
         </button>
