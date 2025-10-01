@@ -58,6 +58,10 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [selectedCell, setValue, setSelectedCell]);
 
+  const handleCellClick = (row: number, col: number) => {
+    setSelectedCell({ row, col });
+  };
+
   const handleNumberPadClick = (num: number | null) => {
     if (selectedCell) {
       setValue(selectedCell.row, selectedCell.col, num);
@@ -132,14 +136,14 @@ function App() {
               originalGrid={gameState.originalGrid}
               selectedCell={selectedCell}
               validateCell={validateCell}
-              onCellClick={setSelectedCell}
+              onCellClick={handleCellClick}
               hintCells={hintCells}
             />
 
             <div className="mt-4">
               <NumberPad
                 onNumberClick={handleNumberPadClick}
-                disabled={!selectedCell || gameState.originalGrid[selectedCell.row][selectedCell.col] !== null}
+                disabled={!selectedCell || (selectedCell && gameState.originalGrid[selectedCell.row][selectedCell.col] !== null)}
               />
             </div>
 
