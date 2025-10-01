@@ -59,10 +59,9 @@ export function SudokuCell({
         transition-all duration-150
         hover:bg-blue-100 dark:hover:bg-blue-900
         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:z-10
-        ${!isOriginal ? 'cursor-pointer' : 'cursor-default'}
+        cursor-pointer
       `}
       onClick={() => onClick(row, col)}
-      disabled={isOriginal}
     >
       {value || ''}
     </button>
